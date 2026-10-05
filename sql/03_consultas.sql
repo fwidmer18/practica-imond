@@ -90,3 +90,35 @@ JOIN dim_channel AS c ON f.channel_key = c.channel_key
 GROUP BY d.year, d.month, c.name
 ORDER BY d.year, d.month, c.name;
 
+
+-- =====================================================================
+-- 5. KPI: Ventas por Provincia
+-- Regla: Agrupar total_amount de fact_sales_order mediante geografía[cite: 5].
+-- =====================================================================
+SELECT 
+    g.province_name AS provincia,
+    SUM(f.total_amount) AS total_ventas
+FROM fact_sales_order AS f
+JOIN dim_geography AS g ON f.shipping_geography_key = g.geography_key
+WHERE f.status IN ('PAID', 'FULFILLED')
+GROUP BY g.province_name
+ORDER BY total_ventas DESC;
+
+
+-- =====================================================================
+-- 6. KPI: Ranking mensual por producto (Top N)
+-- Regla: Agrupar line_total por product_id y mes truncado de la orden[cite: 6].
+-- =====================================================================
+SELECT 
+    d.year AS anio,
+    d.month AS mes,
+    p.name AS producto,
+    SUM(i.line_total) AS total_ventas_producto,
+    RANK() OVER (PARTITION BY d.year, d.month ORDER BY SUM(i.line_total) DESC) AS ranking_mensual
+FROM fact_sales_item AS i
+JOIN fact_sales_order AS o ON i.order_id = o.order_id
+JOIN dim_date AS d ON i.date_key = d.date_key
+JOIN dim_product AS p ON i.product_key = p.product_key
+WHERE o.status IN ('PAID', 'FULFILLED')
+GROUP BY d.year, d.month, p.name
+ORDER BY d.year, d.month, ranking_mensual;
