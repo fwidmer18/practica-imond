@@ -95,3 +95,28 @@ SELECT
 FROM raw.sales_order_item AS i
 JOIN raw.sales_order AS o ON i.order_id = o.order_id
 JOIN dim_product AS p ON i.product_id = p.product_id;
+
+
+-- =====================================================================
+-- 3. HECHOS: SESIONES WEB (USUARIOS ACTIVOS)
+-- Grano: Un registro por cada sesión web.
+-- Uso: Contar los usuarios activos (customer_id o session_id).
+-- =====================================================================
+
+CREATE TABLE fact_web_session (
+    session_id BIGINT PRIMARY KEY,
+    date_key INTEGER REFERENCES dim_date (date_key),
+    customer_key INTEGER REFERENCES dim_customer (customer_key),
+    source VARCHAR,
+    device VARCHAR
+);
+
+INSERT INTO fact_web_session
+SELECT 
+    w.session_id,
+    CAST(strftime(w.started_at, '%Y%m%d') AS INTEGER) AS date_key,
+    COALESCE(c.customer_key, -1) AS customer_key, -- Si el visitante no inició sesión, va al -1 (Anónimo)
+    w.source,
+    w.device
+FROM raw.web_session AS w
+LEFT JOIN dim_customer AS c ON w.customer_id = c.customer_id;
