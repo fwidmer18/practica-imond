@@ -65,6 +65,7 @@ LEFT JOIN dim_customer AS c ON o.customer_id = c.customer_id
 LEFT JOIN dim_channel AS ch ON o.channel_id = ch.channel_id
 LEFT JOIN dim_store AS s ON o.store_id = s.store_id
 LEFT JOIN dim_geography AS g ON o.shipping_address_id = g.address_id;
+
 -- =====================================================================
 -- 2. HECHOS: VENTAS (DETALLE / ÍTEMS)
 -- Grano: Un registro por cada producto dentro de un pedido.
@@ -120,3 +121,29 @@ SELECT
     w.device
 FROM raw.web_session AS w
 LEFT JOIN dim_customer AS c ON w.customer_id = c.customer_id;
+
+
+-- =====================================================================
+-- 4. HECHOS: RESPUESTAS NPS
+-- Grano: Un registro por cada respuesta a la encuesta.
+-- Uso: Calcular el puntaje NPS (Promotores - Detractores).
+-- =====================================================================
+
+CREATE TABLE fact_nps (
+    nps_id BIGINT PRIMARY KEY,
+    date_key INTEGER REFERENCES dim_date (date_key),
+    customer_key INTEGER REFERENCES dim_customer (customer_key),
+    channel_key INTEGER REFERENCES dim_channel (channel_key),
+    score SMALLINT
+);
+
+INSERT INTO fact_nps
+SELECT 
+    n.nps_id,
+    CAST(strftime(n.responded_at, '%Y%m%d') AS INTEGER) AS date_key,
+    COALESCE(c.customer_key, -1) AS customer_key, -- Si es anónimo, va al -1
+    ch.channel_key,
+    n.score
+FROM raw.nps_response AS n
+LEFT JOIN dim_customer AS c ON n.customer_id = c.customer_id
+LEFT JOIN dim_channel AS ch ON n.channel_id = ch.channel_id;
