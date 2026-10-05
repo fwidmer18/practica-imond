@@ -109,3 +109,59 @@ channel_id,
 code,
 name
 FROM raw.channel;
+
+-- DIMENSIÓN CLIENTE
+
+-- Incluimos una fila "Desconocido" con clave -1 para usarla cuando
+-- en web_session o nps_response el customer_id viene vacío.
+
+CREATE TABLE dim_customer (
+customer_key INTEGER PRIMARY KEY,
+customer_id INTEGER, -- Puede ser nulo para el cliente desconocido
+first_name VARCHAR,
+last_name VARCHAR,
+email VARCHAR,
+status VARCHAR
+);
+
+-- Fila por defecto para clientes anónimos
+INSERT INTO dim_customer (customer_key, customer_id, first_name, last_name, email, status)
+VALUES (-1, NULL, 'Anónimo/Desconocido', '', 'sin@email.com', 'I');
+
+-- Clientes reales
+INSERT INTO dim_customer
+SELECT
+ROW_NUMBER() OVER (ORDER BY customer_id) AS customer_key,
+customer_id,
+first_name,
+last_name,
+email,
+status
+FROM raw.customer;
+
+-- DIMENSIÓN GEOGRAFÍA (Dirección + Provincia)
+
+-- Aplanamos las direcciones uniéndolas con su respectiva provincia.
+-- Esto será clave para el KPI de "Ventas por provincia".
+
+CREATE TABLE dim_geography (
+geography_key INTEGER PRIMARY KEY,
+address_id INTEGER,
+city VARCHAR,
+province_name VARCHAR,
+province_code VARCHAR
+);
+
+-- Fila por defecto por si falta alguna dirección
+INSERT INTO dim_geography (geography_key, address_id, city, province_name, province_code)
+VALUES (-1, NULL, 'Desconocido', 'Desconocido', 'NA');
+
+INSERT INTO dim_geography
+SELECT
+ROW_NUMBER() OVER (ORDER BY a.address_id) AS geography_key,
+a.address_id,
+a.city,
+p.name AS province_name,
+p.code AS province_code
+FROM raw.address AS a
+LEFT JOIN raw.province AS p ON a.province_id = p.province_id;
