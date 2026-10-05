@@ -165,3 +165,24 @@ p.name AS province_name,
 p.code AS province_code
 FROM raw.address AS a
 LEFT JOIN raw.province AS p ON a.province_id = p.province_id;
+
+-- DIMENSIÓN TIENDA (Store)
+
+-- Las compras ONLINE no tienen tienda (el store_id viene vacío),
+-- por lo que agregamos una fila por defecto.
+
+CREATE TABLE dim_store (
+store_key INTEGER PRIMARY KEY,
+store_id INTEGER,
+name VARCHAR
+);
+
+INSERT INTO dim_store (store_key, store_id, name)
+VALUES (-1, NULL, 'Tienda Online / No aplica');
+
+INSERT INTO dim_store
+SELECT
+ROW_NUMBER() OVER (ORDER BY store_id) AS store_key,
+store_id,
+name
+FROM raw.store;
