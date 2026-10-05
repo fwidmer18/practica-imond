@@ -65,3 +65,33 @@ LEFT JOIN dim_customer AS c ON o.customer_id = c.customer_id
 LEFT JOIN dim_channel AS ch ON o.channel_id = ch.channel_id
 LEFT JOIN dim_store AS s ON o.store_id = s.store_id
 LEFT JOIN dim_geography AS g ON o.shipping_address_id = g.address_id;
+-- =====================================================================
+-- 2. HECHOS: VENTAS (DETALLE / ÍTEMS)
+-- Grano: Un registro por cada producto dentro de un pedido.
+-- Uso: Ranking mensual por producto.
+-- =====================================================================
+
+CREATE TABLE fact_sales_item (
+    order_item_id BIGINT PRIMARY KEY,
+    order_id BIGINT REFERENCES fact_sales_order (order_id),
+    date_key INTEGER REFERENCES dim_date (date_key),
+    product_key INTEGER REFERENCES dim_product (product_key),
+    quantity INTEGER,
+    unit_price DECIMAL(12,2),
+    discount_amount DECIMAL(12,2),
+    line_total DECIMAL(12,2)
+);
+
+INSERT INTO fact_sales_item
+SELECT 
+    i.order_item_id,
+    i.order_id,
+    CAST(strftime(o.order_date, '%Y%m%d') AS INTEGER) AS date_key,
+    p.product_key,
+    i.quantity,
+    i.unit_price,
+    i.discount_amount,
+    i.line_total
+FROM raw.sales_order_item AS i
+JOIN raw.sales_order AS o ON i.order_id = o.order_id
+JOIN dim_product AS p ON i.product_id = p.product_id;
