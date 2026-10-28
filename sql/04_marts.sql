@@ -183,3 +183,27 @@ SELECT * FROM mart_ticket_promedio;
 SELECT * FROM mart_ventas_producto LIMIT 10;
 
 SELECT * FROM mart_usuarios_activos LIMIT 10;
+
+COPY mart_ventas
+TO 'dw/mart_ventas.csv'
+(HEADER, DELIMITER ',');
+
+COPY mart_ticket_promedio
+TO 'dw/mart_ticket_promedio.csv'
+(HEADER, DELIMITER ',');
+
+COPY mart_nps
+TO 'dw/mart_nps.csv'
+(HEADER, DELIMITER ',');
+
+COPY mart_nps_responses
+TO 'dw/mart_nps_responses.csv'
+(HEADER, DELIMITER ',');
+
+COPY mart_ventas_producto
+TO 'dw/mart_ventas_producto.csv'
+(HEADER, DELIMITER ',');
+
+COPY mart_usuarios_activos
+TO 'dw/mart_usuarios_activos.csv'
+(HEADER, DELIMITER ',');
