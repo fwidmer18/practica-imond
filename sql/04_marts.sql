@@ -174,10 +174,22 @@ JOIN dim_date AS d
 GROUP BY
     d.date_actual;
 
-    CREATE OR REPLACE VIEW mart_nps_promedio AS
+CREATE OR REPLACE VIEW mart_nps_promedio AS
 SELECT
-    ROUND(AVG(puntos_nps), 2) AS puntos_nps_promedio
-FROM mart_nps;
+    d.year AS anio,
+    ROUND(
+        100.0 * (
+            SUM(CASE WHEN n.score >= 9 THEN 1 ELSE 0 END)
+            - SUM(CASE WHEN n.score <= 6 THEN 1 ELSE 0 END)
+        ) / NULLIF(COUNT(n.score), 0),
+        2
+    ) AS puntos_nps,
+    COUNT(n.score) AS total_respuestas
+FROM fact_nps AS n
+JOIN dim_date AS d
+    ON n.date_key = d.date_key
+WHERE n.score BETWEEN 0 AND 10
+GROUP BY d.year;
 
 SELECT * FROM mart_nps LIMIT 10;
 
@@ -215,4 +227,38 @@ TO 'dw/mart_usuarios_activos.csv'
 
 COPY mart_nps_promedio
 TO 'dw/mart_nps_promedio.csv'
+(HEADER, DELIMITER ',');
+
+CREATE OR REPLACE VIEW dm_nps AS
+SELECT
+    n.nps_id,
+    n.date_key,
+    d.date_actual,
+    d.year,
+    d.month,
+    d.month_name,
+    n.customer_key,
+    n.channel_key,
+    ch.name AS channel_name,
+    n.score,
+    CASE
+        WHEN n.score >= 9 THEN 'Promotor'
+        WHEN n.score >= 7 THEN 'Pasivo'
+        WHEN n.score >= 0 THEN 'Detractor'
+        ELSE 'Sin clasificar'
+    END AS nps_category,
+    CASE
+        WHEN n.score >= 9 THEN 100.0
+        WHEN n.score >= 7 THEN 0.0
+        WHEN n.score >= 0 THEN -100.0
+        ELSE NULL
+    END AS puntos_nps
+FROM fact_nps AS n
+JOIN dim_date AS d
+    ON n.date_key = d.date_key
+JOIN dim_channel AS ch
+    ON n.channel_key = ch.channel_key
+WHERE n.score BETWEEN 0 AND 10;
+
+COPY dm_nps TO 'dw/dm_nps.csv'
 (HEADER, DELIMITER ',');
