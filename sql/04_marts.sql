@@ -174,6 +174,11 @@ JOIN dim_date AS d
 GROUP BY
     d.date_actual;
 
+    CREATE OR REPLACE VIEW mart_nps_promedio AS
+SELECT
+    ROUND(AVG(puntos_nps), 2) AS puntos_nps_promedio
+FROM mart_nps;
+
 SELECT * FROM mart_nps LIMIT 10;
 
 SELECT * FROM mart_ventas LIMIT 10;
@@ -206,4 +211,8 @@ TO 'dw/mart_ventas_producto.csv'
 
 COPY mart_usuarios_activos
 TO 'dw/mart_usuarios_activos.csv'
+(HEADER, DELIMITER ',');
+
+COPY mart_nps_promedio
+TO 'dw/mart_nps_promedio.csv'
 (HEADER, DELIMITER ',');
