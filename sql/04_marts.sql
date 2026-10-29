@@ -174,6 +174,21 @@ JOIN dim_date AS d
 GROUP BY
     d.date_actual;
 
+    
+CREATE OR REPLACE VIEW mart_usuarios_activos_total AS
+SELECT
+    COUNT(DISTINCT CASE
+        WHEN customer_key <> -1
+        THEN customer_key
+    END)
+    +
+    COUNT(DISTINCT CASE
+        WHEN customer_key = -1
+        THEN session_id
+    END) AS usuarios_activos_totales
+FROM fact_web_session;
+
+
 CREATE OR REPLACE VIEW mart_nps_promedio AS
 SELECT
     d.year AS anio,
@@ -227,6 +242,10 @@ TO 'dw/mart_usuarios_activos.csv'
 
 COPY mart_nps_promedio
 TO 'dw/mart_nps_promedio.csv'
+(HEADER, DELIMITER ',');
+
+COPY mart_usuarios_activos_total
+TO 'dw/mart_usuarios_activos_total.csv'
 (HEADER, DELIMITER ',');
 
 CREATE OR REPLACE VIEW dm_nps AS
