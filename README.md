@@ -12,7 +12,7 @@ Para reproducir este entorno de manera local mediante la consola, seguí estos p
 
    ```bash
    git clone https://github.com/fwidmer18/practica-imond.git
-   
+
    cd practica-imond
    ```
 
@@ -124,7 +124,8 @@ Los marts se definen en el archivo `sql/04_marts.sql` y sus resultados se export
 | `mart_nps` | Resume el NPS por fecha y canal, incluyendo el total de respuestas y las cantidades de promotores, neutros y detractores. |
 | `mart_nps_responses` | Organiza las respuestas individuales de NPS, incluyendo la fecha, el canal, el cliente, la puntuación y su clasificación. |
 | `mart_ventas_producto` | Permite analizar cantidades vendidas e importes por producto, categoría, canal y período. |
-| `mart_usuarios_activos` | Resume los usuarios activos por fecha, distinguiendo clientes identificados y sesiones anónimas. |
+| `mart_usuarios_activos` | Resume los usuarios activos por fecha, distinguiendo clientes identificados y sesiones anónimas. Permite analizar la evolución diaria de la actividad digital. |
+| `mart_usuarios_activos_total` | Calcula el total global de usuarios activos únicos, sumando los clientes identificados distintos y las sesiones anónimas distintas de `fact_web_session`. Está destinado a mostrar el total general en una tarjeta de Power BI, evitando sumar los conteos diarios y duplicar usuarios que aparecen en varias fechas. |
 | `mart_nps_promedio` | Calcula el indicador NPS anual y la cantidad de respuestas consideradas en cada año. |
 
 ### Uso de los marts en Power BI
@@ -133,9 +134,12 @@ Los resultados de los marts se utilizan como fuentes de datos para construir las
 
 - Evolución de las ventas y del ticket promedio.
 - Ventas por canal, producto y categoría.
-- Evolución de usuarios activos.
+- Evolución diaria de usuarios activos.
+- Total global de usuarios activos únicos.
 - Distribución de las respuestas NPS entre promotores, neutros y detractores.
 - Evolución temporal y anual del NPS.
+
+Para el análisis de usuarios activos, `mart_usuarios_activos` se utiliza para visualizar los valores diarios, mientras que `mart_usuarios_activos_total` permite mostrar el total global sin sumar los conteos de cada día. Este último no responde dinámicamente a filtros de fecha, ya que calcula el total de toda la tabla `fact_web_session`.
 
 Los cálculos principales se realizan en SQL para que la lógica de negocio quede definida en el proceso de transformación de datos y los resultados puedan consumirse desde Power BI.
 
